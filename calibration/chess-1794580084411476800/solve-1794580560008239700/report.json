@@ -1,0 +1,324 @@
+{
+  "schema": 1,
+  "passed": false,
+  "commissioned": false,
+  "session": "D:\\codex\\lab\\Star\\roarm_grasp\\calibration\\chess-1794580084411476800",
+  "translation_unit": "mm",
+  "physical_absolute_accuracy_verified": false,
+  "position_error_reference": "fixed target coordinate origin; not ruler-measured grasp error",
+  "note": "Consistency checks are not physical localization acceptance",
+  "target_family": "chessboard",
+  "joint_mapping": {
+    "joint_signs": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "joint_offsets_rad": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "joint_mapping_physically_verified": false,
+  "raw_check_count": 5,
+  "excluded_check_views": [],
+  "minimum_independent_check_views": 3,
+  "method": "AX_XB_SVD",
+  "fit_count": 20,
+  "check_count": 5,
+  "rotation_motion_singular_values": [
+    6.256996509475788,
+    1.7795065717406278,
+    1.3365127908773593
+  ],
+  "fit_only_method_scores": {
+    "AX_XB_SVD": 8.144565661279453
+  },
+  "max_mm": 5.0,
+  "max_deg": 3.0,
+  "wrist_from_rgb_mm": [
+    [
+      -0.9986325793397841,
+      -0.05182655307382685,
+      -0.006854186870733897,
+      22.97236069721323
+    ],
+    [
+      0.05185875292080326,
+      -0.9986438051797536,
+      -0.004606530321721457,
+      -36.95046810343801
+    ],
+    [
+      -0.006606150669798525,
+      -0.004955680840390691,
+      0.9999658994189441,
+      38.15493545206225
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "wrist_from_depth_mm": [
+    [
+      -0.9982959790832441,
+      -0.05826993677173363,
+      -0.003122269248762073,
+      46.73866491693457
+    ],
+    [
+      0.0582862626106828,
+      -0.9982851772291883,
+      -0.005421145274664466,
+      -38.3422960763118
+    ],
+    [
+      -0.0028010250884108138,
+      -0.005593892722463832,
+      0.9999804548609165,
+      38.37730522884158
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "base_from_target_fit_reference_mm": [
+    [
+      -0.9949416438312993,
+      -0.10044137780242662,
+      0.0016294156686934836,
+      461.81032911443447
+    ],
+    [
+      0.1004539958313975,
+      -0.9947488738485348,
+      0.019587564896560716,
+      19.66397858684915
+    ],
+    [
+      -0.00034654260454093134,
+      0.019652165331626968,
+      0.9998068174932597,
+      -73.15349332252194
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "views": [
+    {
+      "name": "fit/000",
+      "reprojection_px": 0.12904855358002293,
+      "alternate_reprojection_px": 19.26366015816564,
+      "input_json_sha256": "f3af74c6a6dacc2914172e8a59b1a082b3793f8f393d7aea7e3df24c48edbbc0",
+      "center_error_mm": 5.060113275798944,
+      "angle_error_deg": 1.1476666942579565
+    },
+    {
+      "name": "fit/001",
+      "reprojection_px": 0.12950803399906063,
+      "alternate_reprojection_px": 21.410969158081492,
+      "input_json_sha256": "18abdbb13907f9542eb8892f852f07f4d4f40a7879a6d466b180328118df1045",
+      "center_error_mm": 1.790242004913076,
+      "angle_error_deg": 0.8028270775749924
+    },
+    {
+      "name": "fit/002",
+      "reprojection_px": 0.12964838167487158,
+      "alternate_reprojection_px": 24.750208635246807,
+      "input_json_sha256": "9f9c1d589fa8992e501957eca8be822e30b2722c4104e8cc650905f76c68e07e",
+      "center_error_mm": 2.0193786181718263,
+      "angle_error_deg": 0.5118219758741144
+    },
+    {
+      "name": "fit/003",
+      "reprojection_px": 0.14271261631911764,
+      "alternate_reprojection_px": 25.99467764842389,
+      "input_json_sha256": "1ad853120b9160c883fbc65b383f79246968328a467045e4d40cc4b10d6cf84d",
+      "center_error_mm": 3.112934135398705,
+      "angle_error_deg": 0.6594582541862675
+    },
+    {
+      "name": "fit/004",
+      "reprojection_px": 0.13437148912838776,
+      "alternate_reprojection_px": 30.266002051218802,
+      "input_json_sha256": "b9152e02f99853ea2346bdda402ec0c85b62447be0540f8ef2e4b0544641ef79",
+      "center_error_mm": 2.642935321911223,
+      "angle_error_deg": 0.5007398108776474
+    },
+    {
+      "name": "fit/005",
+      "reprojection_px": 0.7783956230163286,
+      "alternate_reprojection_px": 31.078526911879024,
+      "input_json_sha256": "a69c031dcf498ac14a6f09eeaf1ca182045301841b64f42106db8a820240e6c4",
+      "center_error_mm": 2.8379138515131275,
+      "angle_error_deg": 0.46266336232189853
+    },
+    {
+      "name": "fit/006",
+      "reprojection_px": 0.20984897288670365,
+      "alternate_reprojection_px": 31.95345341476546,
+      "input_json_sha256": "4a559e8de13d35fa56f4f9cade050a329b256bcddf870e939f79ac31bee39ea5",
+      "center_error_mm": 2.1006351327779607,
+      "angle_error_deg": 0.33168152126348394
+    },
+    {
+      "name": "fit/007",
+      "reprojection_px": 0.4548724410733187,
+      "alternate_reprojection_px": 38.9700973052535,
+      "input_json_sha256": "a260b2fa8d01dcbd80993790142313c1b8f32895bf4717f62baee0ab7cd9a461",
+      "center_error_mm": 1.9266486059442505,
+      "angle_error_deg": 0.21412869666647316
+    },
+    {
+      "name": "fit/008",
+      "reprojection_px": 0.15755195716233467,
+      "alternate_reprojection_px": 41.15019638240035,
+      "input_json_sha256": "a709714292b99105357cfbf86f606715fff1a257a2221a330444d1aadf5bd5ae",
+      "center_error_mm": 1.1777651405473373,
+      "angle_error_deg": 0.2432370482949551
+    },
+    {
+      "name": "fit/009",
+      "reprojection_px": 0.14954005411718757,
+      "alternate_reprojection_px": 40.5464478765845,
+      "input_json_sha256": "6914b1d5d50d42b508fa329400d1e4948ba74cf10432c5f6f1db3906356a73d2",
+      "center_error_mm": 1.1057155010610056,
+      "angle_error_deg": 0.2347915220034869
+    },
+    {
+      "name": "fit/010",
+      "reprojection_px": 0.16968196936972937,
+      "alternate_reprojection_px": 45.67628741543156,
+      "input_json_sha256": "02ac43df755261b7d3ee1070336aa61f6091bcf959da526028ef4038060d59de",
+      "center_error_mm": 3.1883188423918094,
+      "angle_error_deg": 0.4373495736498965
+    },
+    {
+      "name": "fit/011",
+      "reprojection_px": 0.18557754757478723,
+      "alternate_reprojection_px": 42.7875715315328,
+      "input_json_sha256": "e3d7aa045fc99618696c4cf48c1a667de9c403526611853882ca40b4527972e7",
+      "center_error_mm": 2.333438059858238,
+      "angle_error_deg": 0.5167329733220041
+    },
+    {
+      "name": "fit/012",
+      "reprojection_px": 0.1748274176784924,
+      "alternate_reprojection_px": 44.21223678032245,
+      "input_json_sha256": "d6c04e156ce4907ec96fcaeb074073b5d5a85c966b836858af5dad7b4ded0c0f",
+      "center_error_mm": 2.8587802377039377,
+      "angle_error_deg": 0.5390871624899722
+    },
+    {
+      "name": "fit/013",
+      "reprojection_px": 0.15882200944359437,
+      "alternate_reprojection_px": 42.90462309182184,
+      "input_json_sha256": "d111774d73e9f7c1b457c5006685b3a8cdf10b0340fce6a4a32ef7fe975c7e5b",
+      "center_error_mm": 2.197851029669667,
+      "angle_error_deg": 0.4221055513316565
+    },
+    {
+      "name": "fit/014",
+      "reprojection_px": 0.19412163637982485,
+      "alternate_reprojection_px": 45.88237026435597,
+      "input_json_sha256": "09faef51e05b29b9b880bdbe08848ef6045fa8ee9a6b45feee07b88ac615b458",
+      "center_error_mm": 3.163700062946255,
+      "angle_error_deg": 0.49046971651919763
+    },
+    {
+      "name": "fit/015",
+      "reprojection_px": 0.1512825203556646,
+      "alternate_reprojection_px": 48.60879282049282,
+      "input_json_sha256": "36321bf9121f33b73ac9381ef921bc4c2caac5c55237cdd3a6903adfdfc4f7d4",
+      "center_error_mm": 2.2694561349322075,
+      "angle_error_deg": 0.6073602377219828
+    },
+    {
+      "name": "fit/016",
+      "reprojection_px": 0.15987938915911912,
+      "alternate_reprojection_px": 39.99054644563198,
+      "input_json_sha256": "213e6ca6f14fa1ef58e3afb8affb66b1d1e86454c7cb5a2c7f7d6307bdb84778",
+      "center_error_mm": 2.7943948734703694,
+      "angle_error_deg": 0.490738557587511
+    },
+    {
+      "name": "fit/017",
+      "reprojection_px": 0.1436883942256782,
+      "alternate_reprojection_px": 34.60271723380229,
+      "input_json_sha256": "55e6b06e04c7262e6fa911d339fc8f7f9b7454e546aa8894361cc4f519be286d",
+      "center_error_mm": 3.2441729965348407,
+      "angle_error_deg": 0.24568237218273928
+    },
+    {
+      "name": "fit/018",
+      "reprojection_px": 0.1460274692309782,
+      "alternate_reprojection_px": 34.83933626648342,
+      "input_json_sha256": "1f82e24d2f7d85ff0fc79155fc1ef573fc2ffc6923d7c87eea9454e8d77ddf8e",
+      "center_error_mm": 3.6923103709095337,
+      "angle_error_deg": 0.2712827841047112
+    },
+    {
+      "name": "fit/019",
+      "reprojection_px": 0.1565919621609427,
+      "alternate_reprojection_px": 35.822325958940546,
+      "input_json_sha256": "97ebaf83dd7a896b452e9df6c2b282feb13779fb1c8b112bf3bb31d6717928b8",
+      "center_error_mm": 4.171830109473389,
+      "angle_error_deg": 0.5305836083183695
+    },
+    {
+      "name": "check/000",
+      "reprojection_px": 0.12721744941176374,
+      "alternate_reprojection_px": 32.59208626406811,
+      "input_json_sha256": "f6c015560ee49673c39de3764738d3fc8c6c7964594ee59bce4835f640353e3d",
+      "center_error_mm": 6.860744041622241,
+      "angle_error_deg": 0.8423029458096541
+    },
+    {
+      "name": "check/001",
+      "reprojection_px": 0.1620923922877617,
+      "alternate_reprojection_px": 31.346019666615188,
+      "input_json_sha256": "ada62aca65a9905b10df13dcc6108ced9d7d3942e7669db65c7b3031d5044e46",
+      "center_error_mm": 9.89674532361578,
+      "angle_error_deg": 1.2337721712424716
+    },
+    {
+      "name": "check/002",
+      "reprojection_px": 0.12114141096201435,
+      "alternate_reprojection_px": 32.119111883557615,
+      "input_json_sha256": "b14537494a763188c8cbdb0f252ed1bdbf6943ec660178426c9ca4324c6ec001",
+      "center_error_mm": 3.0766728912182155,
+      "angle_error_deg": 0.5600516580604212
+    },
+    {
+      "name": "check/003",
+      "reprojection_px": 0.1574616139972865,
+      "alternate_reprojection_px": 32.952279931498516,
+      "input_json_sha256": "d8154e9c67878233a5159a0db414415671024b8dd61ad4208cadb8f807ee00e3",
+      "center_error_mm": 2.305264475188204,
+      "angle_error_deg": 0.5466795017213674
+    },
+    {
+      "name": "check/004",
+      "reprojection_px": 0.16029435294682504,
+      "alternate_reprojection_px": 33.200129299779256,
+      "input_json_sha256": "f00d322d0ab58474317f8e939a743f58b5defe4a4176ab9a01a4df8a905dabdd",
+      "center_error_mm": 3.7524329062550534,
+      "angle_error_deg": 0.7032644932647619
+    }
+  ]
+}

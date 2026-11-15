@@ -1,0 +1,7 @@
+# Windows CPython 3.12; project-local .traindeps, before .cudadeps on sys.path.
+numpy==1.26.4
+matplotlib==3.10.3
+opencv-python==4.11.0.86
+contourpy==1.3.3
+python-dateutil==2.9.0.post0
+polars-runtime-32==2.1.0

@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-12",
+  "change": "ID16 startup joint target +48 degrees; servo zero unchanged",
+  "initial_roll_servo_tick": 1502,
+  "feedback_equivalent_degrees": 47.98828125,
+  "compile_passed": true,
+  "flash_hash_verified": true,
+  "port": "COM6",
+  "new_backup_created": false,
+  "app_sha256": "5768ac9b0b78abc03ca86b4dfa44591111f7df8490b2001c41a61f29bacc15db",
+  "physical_motion_verified": false,
+  "shoulder_elbow_no_motion_cause": "unresolved"
+}

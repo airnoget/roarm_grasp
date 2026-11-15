@@ -1,0 +1,13 @@
+{
+  "task": "YOLO RGB artificial_object detection; not GG-CNN",
+  "sha256": "4c1e8372f5bf93573c9bd95b27242d7d6d2d12ae9a0f4b0b53aa34886ba6fb95",
+  "bytes": 22494634,
+  "validation": {
+    "images": 40,
+    "precision": 0.999,
+    "recall": 1,
+    "map50": 0.995,
+    "map50_95": 0.742
+  },
+  "physical_grasp_reliability_verified": false
+}

@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "camera": "Gemini 335L",
+  "source": "User-provided Wi-Fi feedback screenshots, 2026-11-13",
+  "joint_order": [
+    "base",
+    "shoulder",
+    "elbow",
+    "wrist_pitch",
+    "wrist_roll"
+  ],
+  "servo_ids": [
+    [
+      11
+    ],
+    [
+      12,
+      13
+    ],
+    [
+      14
+    ],
+    [
+      15
+    ],
+    [
+      16
+    ]
+  ],
+  "unit": "joint_degrees_not_servo_encoder_degrees",
+  "selected": "user_boot_20261114_pitch38",
+  "poses": {
+    "user_boot_20261114_pitch38": [0.44, 0, 160, -38, 3],
+    "photo_1": [
+      0.44,
+      7.47,
+      130.34,
+      -2.2,
+      47.81
+    ],
+    "photo_2": [
+      0.62,
+      5.01,
+      116.81,
+      19.51,
+      47.81
+    ],
+    "user_boot_20261113": [
+      0.44,
+      0,
+      160,
+      -46,
+      3
+    ]
+  },
+  "status": "Observation references only, not verified boot or collision-free transit poses",
+  "firmware_boot_changed": true,
+  "automatic_motion_enabled": false,
+  "firmware_boot_status": "v11-base360-pitch38 compiled and flashed 2026-11-15, esptool hash verified; physical boot pose not yet verified"
+}

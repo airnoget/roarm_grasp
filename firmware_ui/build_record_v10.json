@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-13",
+  "page_version": "wifi-debug-20261113-v10-pitch-minus46",
+  "compile_passed": true,
+  "flash_exit_code": 0,
+  "flash_port": "COM6",
+  "esp_mac": "cc:7b:5c:1f:07:04",
+  "esptool_hash_verified": true,
+  "app_bytes": 1230128,
+  "app_sha256": "01d71989d60da31d7e3ed8d66eb2d5aab99767a27246eb54044de7edf0a27f7a",
+  "backup_created": false,
+  "requested_boot_degrees": {
+    "base": 0.44,
+    "shoulder": 0,
+    "elbow": 160,
+    "wrist_pitch": -46,
+    "wrist_roll": 3,
+    "gripper": 110
+  },
+  "physical_boot_pose_verified": false
+}

@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-15",
+  "page_version": "wifi-debug-20261115-v11-base360-pitch38",
+  "compile_passed": true,
+  "flash_exit_code": 0,
+  "flash_port": "COM6",
+  "esp_mac": "cc:7b:5c:1f:07:04",
+  "flash_offset": "0x10000",
+  "esptool_hash_verified": true,
+  "app_bytes": 1230128,
+  "app_sha256": "b447196f2f1eebe8795391c0960cec41187b6607ce2b906b03929b393981ca5f",
+  "base_ui_limits_deg": [-179.9, 179.9],
+  "requested_boot_degrees": [0.44, 0, 160, -38, 3, 110],
+  "physical_boot_pose_verified": false,
+  "physical_base_range_verified": false,
+  "backup_created": false
+}

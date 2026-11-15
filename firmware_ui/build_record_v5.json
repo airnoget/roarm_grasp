@@ -1,0 +1,19 @@
+{
+  "version": "wifi-debug-20261112-v5",
+  "compile_passed": true,
+  "regression_passed": [
+    "five joints / three speeds / both boundaries / small overshoot return",
+    "raw servo tick bounds including paired shoulder",
+    "browser inward/outward enable and command routing",
+    "hold/release/cancel/connection cases"
+  ],
+  "flash_hash_verified": true,
+  "new_backup_created": false,
+  "port": "COM6",
+  "app_bytes": 1226400,
+  "app_sha256": "b8dcde4ebc9c41270201721531019a44a0b09070625aaa09267869eda8df9cc2",
+  "elbow_max_degrees": 179.912109375,
+  "roll_min_degrees": -179.912109375,
+  "live_wifi_accessible": false,
+  "physical_joint_motion_tested": false
+}

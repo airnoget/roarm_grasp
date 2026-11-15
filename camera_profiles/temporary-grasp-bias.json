@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "display_left_mm": 20.0,
+  "descent_extra_down_mm": 10.0,
+  "frame": "locked observation camera, display rotated 180 degrees",
+  "purpose": "Temporary bench compensation requested by user; not TCP calibration",
+  "disable_before_tcp_calibration": true,
+  "reminder": "Before TCP calibration disable this profile and set display_left_mm=0, descent_extra_down_mm=0; both are temporary compensation"
+}

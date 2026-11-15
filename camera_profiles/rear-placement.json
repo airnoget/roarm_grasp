@@ -1,0 +1,8 @@
+{
+  "retract_joint_order": ["shoulder", "elbow", "wrist_pitch", "wrist_roll"],
+  "retract_joints_deg": [0, 160, -38, 3],
+  "home_base_deg": 0.44,
+  "base_policy": "Keep measured base angle during retract; rotate 180 degrees only after retract finishes",
+  "gripper_policy": "Keep existing holding target until rear release",
+  "physical_transit_verified": false
+}

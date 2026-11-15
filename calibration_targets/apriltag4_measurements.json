@@ -1,0 +1,19 @@
+{
+  "family": "tag36h11",
+  "ids_layout": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ]
+  ],
+  "tag_black_edge_mm": 50,
+  "gap_x_mm": 34.5,
+  "gap_y_mm": 29,
+  "measurement_status": "user approximate ruler measurement; not board acceptance",
+  "source": "printed handeye manual page",
+  "joint_board_solver_enabled": false
+}

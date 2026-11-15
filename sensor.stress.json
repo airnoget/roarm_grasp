@@ -1,0 +1,11 @@
+{
+  "min_range_mm": 130,
+  "max_range_mm": 900,
+  "depth_bias_mm": 1.5,
+  "depth_sigma_mm": 1.2,
+  "dropout": 0.04,
+  "hole_count": 6,
+  "hole_radius_px": 4,
+  "mount_translation_sigma_mm": 1,
+  "mount_rotation_sigma_deg": 0.3
+}

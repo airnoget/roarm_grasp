@@ -1,0 +1,6 @@
+{
+  "link5_tcp_position_mm": [0, 0, 90],
+  "source": "User requested adjustment 2026-11-14: ID16 output horn centre to grasp centre approximated as 90mm; supersedes previous 85mm setting",
+  "assumption": "ID16 horn reference approximated as link5 origin; extension follows official link5 +Z; transverse X assumed zero",
+  "physically_validated": false
+}

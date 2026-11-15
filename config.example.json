@@ -1,0 +1,70 @@
+{
+  "commissioned": false,
+  "require_base_interlock": false,
+  "camera_mount": "fixed",
+  "wrist_acceptance": null,
+  "tcp_compatibility_report": null,
+  "require_physical_tcp": false,
+  "vendor": ".vendor/roarm_ws",
+  "joint_signs": [1, 1, 1, 1, 1],
+  "joint_offsets_rad": [0, 0, 0, 0, 0],
+  "port": null,
+  "transform": "camera_to_base.npy",
+  "roi": [
+    160,
+    80,
+    320
+  ],
+  "table_z_mm": 0,
+  "support_search_mm": null,
+  "support_regions_mm": null,
+  "tcp_support_clearance_mm": null,
+  "block_height_mm": [
+    12,
+    85
+  ],
+  "min_area_px": 100,
+  "min_score": 0.25,
+  "max_width_mm": 55,
+  "surface_to_tcp_mm": -8,
+  "approach_mm": 55,
+  "workspace_mm": [
+    [
+      170,
+      -85,
+      8
+    ],
+    [
+      320,
+      85,
+      240
+    ]
+  ],
+  "pitch_rad": 0,
+  "roll_sign": 1,
+  "roll_zero_rad": 0,
+  "roll_limits_rad": [
+    -1.57,
+    1.57
+  ],
+  "open_rad": 1.08,
+  "close_rad": 3.14,
+  "speed": 0.15,
+  "position_tolerance_mm": 5,
+  "motion_timeout_s": 20,
+  "grip_wait_s": 1.5,
+  "proof_lift_mm": 12,
+  "storage": null,
+  "grip_acceptance": null,
+  "held_angle_rad": null,
+  "held_min_load": 0
+}
+
+
+
+
+
+
+
+
+

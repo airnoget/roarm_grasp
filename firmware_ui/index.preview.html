@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RoArm 腕部标定调试</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2f4f7;color:#152333;font:16px system-ui,sans-serif}main{max-width:850px;margin:auto;padding:22px 14px}h1{font-size:25px;margin:0 0 8px}.sub{color:#526374;line-height:1.6}.card{background:white;border:1px solid #d9e0e8;border-radius:12px;padding:18px;margin:16px 0}.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}button,select{font:inherit;padding:12px 18px;border:1px solid #adbccc;border-radius:8px;background:#fff;touch-action:manipulation}button:enabled{cursor:pointer}button:disabled{opacity:.35}button.primary{background:#145eac;color:#fff;border:0}.badge{border-radius:20px;padding:6px 10px;background:#edf0f4}.ok{background:#d9f0e1;color:#165e30}.bad{background:#ffe7e4;color:#9d251c}.row{display:grid;grid-template-columns:1fr 100px 62px 62px;gap:9px;align-items:center;padding:14px 0;border-bottom:1px solid #e8edf2}.row:last-child{border:0}.reason{font-size:12px;color:#8b5516;line-height:1.5}.controller{position:sticky;top:0;z-index:3;box-shadow:0 4px 15px #15233315}.controller .note{margin-bottom:0;font-size:12px}.controller button,.controller select{padding:8px 12px}#message{font-size:14px;margin:8px 0}.name{font-weight:650}.id{font-size:13px;color:#5d6a77}.angle{text-align:right;font-variant-numeric:tabular-nums}.row button{font-size:22px;padding:9px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.row button.held{background:#145eac;color:white;border-color:#145eac}.note{font-size:14px;line-height:1.65;color:#526374}#message{min-height:2em;line-height:1.6}pre{white-space:pre-wrap;font:13px ui-monospace,monospace;background:#f3f5f8;padding:12px}label{display:flex;gap:8px;align-items:center}@media(max-width:420px){.row{grid-template-columns:1fr 77px 48px 48px;gap:6px}.row button{padding:9px 6px}}
+</style></head><body><main>
+<h1>RoArm 腕部标定调试</h1><div class="sub">按住转动 · 松手不再增加目标 · 保存标定样本前等待稳定</div>
+<section class="card controller"><div class="bar"><span id="connection" class="badge bad">等待连接</span><span id="voltage">供电 —</span><span id="age">反馈 —</span></div><p id="message">页面打开和重新连接均保持锁定。</p>
+<div class="bar"><label>调姿速度 <select id="speed"><option value="fine">细调 ≈1°/秒</option><option value="normal" selected>常规 ≈5°/秒</option><option value="fast">快速 ≈10°/秒</option></select></label><button id="unlock" class="primary">启用调姿</button><button id="lock">锁定控制</button></div>
+<p class="note">按住 ＋/− 持续转动，松手不再发新目标。肩、肘目标最多领先实测8°，其余4°；松手后末段仍可能继续完成。标注速度是上限，实际受网络和负载影响。</p></section>
+<section class="card"><div class="bar"><strong>原装照明</strong><button id="lightOn">开灯</button><button id="lightOff">关灯</button><span id="lightStatus">状态未确认</span></div></section>
+<section class="card"><div id="joints"></div></section>
+<section class="card"><div class="name">状态与最近指令</div><p class="note">调姿不等待精确到位；保存标定样本前必须松手，等待实际关节角稳定。这里显示实测角度，绝不能用目标角替代采样角。肩关节驱动12和13两个舵机。</p><pre id="last">尚未发送运动指令</pre><details><summary>舵机诊断（无动作或方向异常时展开）</summary><p class="note">只读反馈：力矩0为关闭，模式0为位置模式；未知值需核对，不会自动开启力矩。目标记录来自控制板已处理的队列指令。</p><pre id="diagnostics">等待诊断反馈</pre></details><div class="note">页面版本 wifi-debug-20261115-v11-base360-pitch38</div></section>
+</main><script>
+/* Bounded single-joint commands for bench commissioning. No broadcast commands. */
+(function(root){
+  'use strict';
+  const joints=[
+    {id:1,key:'b',name:'底座',servo:'11',min:-179.9,max:179.9},
+    {id:2,key:'s',name:'肩关节',servo:'12 + 13',min:-90,max:90},
+    {id:3,key:'e',name:'肘关节',servo:'14',min:0,max:(3071-1024)*360/4096},
+    {id:4,key:'t',name:'腕部俯仰',servo:'15',min:-90,max:90},
+    {id:5,key:'r',name:'腕部旋转',servo:'16',min:180-4095*360/4096,max:180},
+    {id:6,key:'g',name:'夹爪',servo:'17',min:700*360/4096,max:3396*360/4096}
+  ];
+  const modes={fine:{step:.25,spd:40,interval:250},normal:{step:1.25,spd:100,interval:250},fast:{step:2,spd:160,interval:200}};
+  function makeStep(id, radians, deltaDegrees, speed=80){
+    const joint=joints.find(j=>j.id===id);
+    if(!joint || !Number.isFinite(radians) || !Number.isFinite(deltaDegrees) ||
+       Math.abs(deltaDegrees)>2 || deltaDegrees===0 || !Number.isInteger(speed) || speed<20 || speed>160) throw Error('无效的关节或步长');
+    const current=radians*180/Math.PI, epsilon=1e-7;
+    const fail=(code,message)=>{const error=Error(message);error.code=code;throw error;};
+    const label=x=>x.toFixed(2).replace(/\.?0+$/,'');
+    // Only the outward direction is blocked at a boundary. A measured overshoot
+    // <=2 degrees can return to the boundary; never command a large clamp jump.
+    let target=current+deltaDegrees;
+    if(current<joint.min-epsilon || current>joint.max+epsilon){
+      const lower=current<joint.min, edge=lower?joint.min:joint.max;
+      if(lower?deltaDegrees<0:deltaDegrees>0)fail(lower?'limit_lower':'limit_upper',`已到${lower?'下':'上'}限 ${label(edge)}°，请按${lower?'＋':'−'}返回`);
+      if(Math.abs(edge-current)>2+epsilon)fail('feedback_range',`实测角 ${label(current)}° 超出范围，请核对舵机零点/反馈`);
+      target=edge;
+    }else{
+      if(deltaDegrees<0&&current<=joint.min+epsilon)fail('limit_lower',`已到下限 ${label(joint.min)}°，请按＋返回`);
+      if(deltaDegrees>0&&current>=joint.max-epsilon)fail('limit_upper',`已到上限 ${label(joint.max)}°，请按−返回`);
+      target=Math.max(joint.min,Math.min(joint.max,target));
+    }
+    return {T:101,joint:id,rad:target*Math.PI/180,spd:speed,acc:5};
+  }
+  function makeJog(id, measured, previousTarget, sign, modeName){
+    const joint=joints.find(j=>j.id===id), mode=modes[modeName];
+    if(!joint||!mode||!Number.isFinite(measured)||(sign!==1&&sign!==-1))throw Error('无效调姿输入');
+    const deg=measured*180/Math.PI, previous=Number.isFinite(previousTarget)?previousTarget:measured;
+    // Never let a stale goal put a new command on the wrong side of feedback.
+    const origin=deg<joint.min||deg>joint.max?measured:
+      sign>0?Math.max(measured,previous):Math.min(measured,previous);
+    const cmd=makeStep(id,origin,sign*mode.step,mode.spd);
+    if(sign*(cmd.rad-measured)<=1e-10)throw Error('方向校验失败，未发送');
+    const leadDegrees=(id===2||id===3)?8:4;
+    if(Math.abs(cmd.rad-measured)>(leadDegrees+.01)*Math.PI/180){const e=Error(`目标已领先反馈${leadDegrees}°，实测未跟随；请松手查看舵机状态`);e.code='lead_limit';throw e;}
+    return cmd;
+  }
+  const api={joints,modes,makeStep,makeJog};
+  if(typeof module!=='undefined')module.exports=api;
+  root.RoArmControl=api;
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+</script><script>
+ 'use strict';
+const $=id=>document.getElementById(id), api=RoArmControl;
+let state=null,stamp=0,unlocked=false,sending=false,nextClick=0,ws=null,hold=null,holdTimer=null;
+const goals=new Map(), rows=new Map();
+for(const j of api.joints){
+ const row=document.createElement('div');row.className='row';
+ row.innerHTML=`<div><div class="name">${j.name}</div><div class="id">舵机 ${j.servo} · ${j.min.toFixed(0)}～${j.max.toFixed(1)}°</div><div class="reason"></div></div><div class="angle">—</div><button disabled aria-label="${j.name}减少">−</button><button disabled aria-label="${j.name}增加">＋</button>`;
+ const buttons=row.querySelectorAll('button');
+ buttons.forEach((b,i)=>{
+  const sign=i===0?-1:1;
+  b.onpointerdown=e=>{if(e.button!==0||hold)return;e.preventDefault();if(beginHold(j,sign,b,e.pointerId)){try{b.setPointerCapture(e.pointerId);}catch(_){}}};
+  b.onpointermove=e=>{if(!hold||hold.pointerId!==e.pointerId)return;const box=b.getBoundingClientRect();if(e.clientX<box.left||e.clientX>box.right||e.clientY<box.top||e.clientY>box.bottom)stopHold('手指已移出按钮，不再增加目标。');};
+  b.onlostpointercapture=()=>{if(hold&&hold.button===b)stopHold();};
+  b.oncontextmenu=e=>e.preventDefault();
+  b.onkeydown=e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();beginHold(j,sign,b,null);}};
+  b.onkeyup=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();stopHold();}};
+  b.onclick=e=>{e.preventDefault();if(e.detail===0&&!hold)move(j,sign);};
+ });
+ rows.set(j.id,{row,angle:row.querySelector('.angle'),reason:row.querySelector('.reason'),buttons});$('joints').appendChild(row);
+}
+function healthy(j){
+ if(!state || !Array.isArray(state.servo_ok) || state.servo_ok.length!==7)return false;
+ const indices=j.id===2?[1,2]:[j.id===1?0:j.id];
+ return indices.every(i=>state.servo_ok[i]===true)&&Number.isFinite(state[j.key]);
+}
+function fault(){
+ if(!state)return '等待首次反馈';
+ if(!Number.isFinite(state.v)||state.v<700||state.v>1290)return '请检查12V供电';
+ if(state.Stalltor)return '过流保护';if(state.Stalltep)return '温度保护';if(state.Stallvol)return '电压保护';
+ return '';
+}
+function unavailable(){
+ if(!ws||ws.readyState!==1)return '连接断开';
+ if(!state)return '等待首次反馈';
+ if(performance.now()-stamp>3000)return '反馈延迟，恢复后自动继续';
+ return fault();
+}
+function stopHold(message='已松手，不再增加目标；最后一小段可能继续完成。'){
+ const previous=hold;hold=null;if(holdTimer!==null)clearInterval(holdTimer);holdTimer=null;
+ if(previous){previous.button.classList.remove('held');if(previous.pointerId!==null){try{if(previous.button.hasPointerCapture(previous.pointerId))previous.button.releasePointerCapture(previous.pointerId);}catch(_){}}$('message').textContent=message;}
+ goals.clear();draw();
+}
+function beginHold(j,sign,button,pointerId){
+ if(hold||unavailable()||!unlocked||!healthy(j))return false;
+ goals.delete(j.id);hold={joint:j,sign,button,pointerId};button.classList.add('held');
+ holdTimer=setInterval(()=>{if(!hold)return;if(unavailable()||!unlocked||!healthy(hold.joint)){stopHold('反馈暂不可用，已停止连续调姿；恢复后请重新按住。');return;}move(hold.joint,hold.sign);},40);move(j,sign);return true;
+}
+window.addEventListener('pointerup',e=>{if(hold&&hold.pointerId===e.pointerId)stopHold();},true);
+window.addEventListener('pointercancel',e=>{if(hold&&hold.pointerId===e.pointerId)stopHold('触控已取消，不再增加目标。');},true);
+window.addEventListener('blur',()=>stopHold('窗口失去焦点，不再增加目标。'));
+window.addEventListener('pagehide',()=>lock('页面离开，控制已锁定。'));
+$('speed').onchange=()=>stopHold('速度已调整，请重新按住按钮。');
+function lock(message){unlocked=false;stopHold(message);if(message)$('message').textContent=message;draw();}
+function candidate(j,sign){
+ return api.makeJog(j.id,state[j.key],goals.get(j.id),sign,$('speed').value);
+}
+function draw(){
+ const reason=unavailable();
+ if(state&&Array.isArray(state.servos))$('diagnostics').textContent='控制板最近处理：'+JSON.stringify(state.last_motion||null)+'\n'+state.servos.map(v=>v.ok?`ID${v.id} 位置:${v.position_raw} 目标:${v.goal_raw} 力矩:${v.torque_enabled} 模式:${v.mode} 温度:${v.temperature_c}°C 电流:${v.current_ma}mA 电压原始值:${v.voltage_raw}`:`ID${v.id} 无反馈`).join('\n');
+ $('unlock').textContent=unlocked?'调姿已启用':'启用调姿';$('unlock').disabled=!!reason;
+ $('connection').textContent=reason||'反馈在线';$('connection').className='badge '+(reason?'bad':'ok');
+ $('age').textContent=stamp?`反馈 ${((performance.now()-stamp)/1000).toFixed(1)} 秒前`:'反馈 —';
+ $('voltage').textContent=state&&Number.isFinite(state.v)?`${(state.v/100).toFixed(2)} V`:'供电 —';
+ for(const j of api.joints){
+  const r=rows.get(j.id);r.angle.textContent=state&&Number.isFinite(state[j.key])?`${(state[j.key]*180/Math.PI).toFixed(2)}°`:'—';
+  let why=reason||(!unlocked?'请先启用调姿':!healthy(j)?'此关节无有效反馈':''),directionReasons=[];
+  r.buttons.forEach((b,i)=>{let blocked=why;if(!blocked){try{candidate(j,i===0?-1:1);}catch(e){blocked=e.message;directionReasons.push((i===0?'−：':'＋：')+blocked);}}b.disabled=!!why||!!blocked&&!(hold&&hold.button===b);b.title=blocked;});
+  r.reason.textContent=why||directionReasons.join('；')||(hold&&hold.joint.id===j.id?'长按转动中…':'按住转动，松手结束');
+ }
+}
+async function move(j,sign){
+ if(unavailable()||!unlocked||sending||performance.now()<nextClick||!healthy(j))return;
+ let cmd;try{cmd=candidate(j,sign);}catch(e){if(hold&&(e.code==='limit_lower'||e.code==='limit_upper'||e.code==='feedback_range'))stopHold(e.message);else $('message').textContent=e.message;draw();return;}
+ sending=true;goals.set(j.id,cmd.rad);draw();
+ $('last').textContent=`${j.name} ${sign>0?'＋':'−'}：实测 ${(state[j.key]*180/Math.PI).toFixed(2)}° → 目标 ${(cmd.rad*180/Math.PI).toFixed(2)}°\n`+JSON.stringify(cmd);
+ $('message').textContent=`正在发送：${j.name}`;
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);
+ try{
+  const response=await fetch('/js?json='+encodeURIComponent(JSON.stringify(cmd)),{cache:'no-store',signal:controller.signal});
+  if(!response.ok)throw Error('控制板未接受请求');
+  const body=await response.json();if(body.ok!==1)throw Error(body.error||'请求失败');
+  $('message').textContent=hold?'长按转动中，松手不再增加目标。':'已松手，不再增加目标；最后一小段可能继续完成。';
+ }catch(e){lock('请求未确认，已锁定：'+e.message);}
+ finally{clearTimeout(timer);sending=false;nextClick=performance.now()+api.modes[$('speed').value].interval;draw();}
+}
+$('unlock').onclick=()=>{if(!unavailable()){if(unlocked)lock('控制已锁定。');else{unlocked=true;$('message').textContent='调姿已启用，按住 ＋/− 转动。';draw();}}};
+$('lock').onclick=()=>lock('已锁定，不再发送新目标。已发出的动作可能仍在完成。');
+async function light(led){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);
+ $('lightOn').disabled=$('lightOff').disabled=true;
+ try{
+  const response=await fetch('/js?json='+encodeURIComponent(JSON.stringify({T:114,led})),{cache:'no-store',signal:controller.signal});
+  if(!response.ok)throw Error('请求失败');
+  const body=await response.json();if(body.ok!==1)throw Error(body.error||'控制板未接受');
+  $('lightStatus').textContent=(led?'开灯':'关灯')+'指令已入队（无亮度反馈）';
+ }catch(e){$('lightStatus').textContent='灯光请求失败：'+e.message;}
+ finally{clearTimeout(timer);$('lightOn').disabled=$('lightOff').disabled=false;}
+}
+$('lightOn').onclick=()=>light(255);$('lightOff').onclick=()=>light(0);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)lock('页面已进入后台，控制已锁定。');});
+function connect(){
+ ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
+ ws.onopen=()=>lock('连接已建立，等待反馈。');
+ ws.onclose=()=>{state=null;stamp=0;lock('连接断开，控制已锁定。');setTimeout(connect,1500);};
+ ws.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.T!==-15)return;state=m;stamp=performance.now();
+  if(fault()){lock(fault()+'，控制已锁定。');return;}
+  for(const j of api.joints)if(healthy(j)&&goals.has(j.id)&&Math.abs(m[j.key]-goals.get(j.id))<.3*Math.PI/180)goals.delete(j.id);
+  draw();}catch(_){}};
+}
+setInterval(()=>{if(hold&&(unavailable()||!healthy(hold.joint)))stopHold('反馈暂不可用，不再增加目标。');if(stamp&&performance.now()-stamp>10000&&unlocked)lock('超过10秒没有反馈，已锁定。');draw();},100);
+connect();draw();
+</script></body></html>

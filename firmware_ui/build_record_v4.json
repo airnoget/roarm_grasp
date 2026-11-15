@@ -1,0 +1,14 @@
+{
+  "version": "wifi-debug-20261112-v4",
+  "compile_passed": true,
+  "browser_hold_release_regressions_passed": true,
+  "flash_hash_verified": true,
+  "new_flash_backup_created": false,
+  "port": "COM6",
+  "app_bytes": 1225280,
+  "app_sha256": "bc0a667db74a0e5b6dca49c3036ac7591c516d7a279aa20f1176d7ea83d1b0f1",
+  "physical_motion_tested": false,
+  "control": "pointer/keyboard hold with bounded T101 targets and one HTTP request in flight",
+  "release": "stop adding goals; last target may finish, max lead 4 degrees",
+  "calibration_capture_unchanged": true
+}

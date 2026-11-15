@@ -1,0 +1,11 @@
+{
+  "version": "wifi-debug-20261111-v2",
+  "compile_passed": true,
+  "browser_regression_passed": true,
+  "flash_hash_verified": true,
+  "new_flash_backup_created": false,
+  "updated_flash_offset": "0x10000",
+  "app_size": 1221120,
+  "app_sha256": "d63abbedff692ee0e0452131b8003a5cf1f2c2483fc887c3db43d5df31134d2b",
+  "physical_motion_tested": false
+}

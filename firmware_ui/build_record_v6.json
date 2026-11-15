@@ -1,0 +1,12 @@
+{
+  "version": "wifi-debug-20261112-v6",
+  "compile_passed": true,
+  "direction_invariant_cases_passed": 9098,
+  "browser_hold_and_boundaries_passed": true,
+  "flash_hash_verified": true,
+  "new_backup_created": false,
+  "port": "COM6",
+  "initial_roll_degrees": 48,
+  "app_sha256": "d102bf0fbf122bd66ff2854ff9de4b56ebafca9f7cc25059fd1fa92b3df8abfe",
+  "physical_motion_verified": false
+}

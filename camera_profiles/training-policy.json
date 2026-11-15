@@ -1,0 +1,10 @@
+{
+  "confirmed_date": "2026-11-12",
+  "source": "D:/Lab/挑战杯/depth_cfg/depth_01.json",
+  "frozen_preset": "camera_profiles/gemini335l-viewer-near.json",
+  "sha256": "f6390e4b299b539d3100418d04b4f90ebdc0e22d757609c9f4d09ed11843c93f",
+  "policy": "Use this preset for subsequent acquisition and training datasets. Record the preset hash; do not relabel legacy captures as acquired under this preset.",
+  "existing_100_images": "legacy configuration; not retroactively compliant",
+  "sensor_orientation_override": "native orientation zero; 180 degrees for display only",
+  "status": "User-confirmed acquisition baseline; not a depth-quality or motion acceptance certificate"
+}

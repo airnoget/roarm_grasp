@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-13",
+  "compile_passed": true,
+  "app_bytes": 1230400,
+  "app_sha256": "80696bddea0279899fee6c90a1a291d00a05fb50c8b8baa0c22aef60dba555b1",
+  "flash_port": "COM6",
+  "esp_mac": "cc:7b:5c:1f:07:04",
+  "flash_offset": "0x10000",
+  "flash_exit_code": 0,
+  "esptool_hash_verified": true,
+  "backup_created": false,
+  "light_command": {"T": 114, "led_on": 255, "led_off": 0},
+  "requested_boot_joint_degrees": [0.44, 7.47, 130.34, -2.20, 47.81],
+  "boot_note": "Original paired-shoulder zeroing runs first, then photo_1 joint targets; physical motion not yet verified",
+  "physical_light_verified": false,
+  "physical_boot_pose_verified": false,
+  "page_version_label": "wifi-debug-20261112-v7 retained; added light buttons and observation boot pose"
+}

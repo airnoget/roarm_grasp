@@ -1,0 +1,18 @@
+{
+  "version": "wifi-debug-20261112-v7",
+  "compile_passed": true,
+  "direction_invariant_cases_passed": 9558,
+  "browser_hold_and_boundaries_passed": true,
+  "screenshot_lag_regression_passed": true,
+  "change": "shoulder and elbow finite target lead cap 4 to 8 degrees; other joints remain 4; command step and servo limits unchanged",
+  "physical_issue_scope": "Screenshot proves target processed with torque enabled but tracking error remains; lead cap was reached. Physical recovery not yet verified; paired servo/load issues not excluded.",
+  "initial_roll_degrees": 48,
+  "app_sha256": "ecc528c317647199d30e7e51499229e73e5a6f7e1f22050d380bc6f28c893380",
+  "flash_hash_verified": true,
+  "physical_motion_verified": false,
+  "new_backup_created": false,
+  "port": "COM6",
+  "mac": "cc:7b:5c:1f:07:04",
+  "user_reported_shoulder_elbow_recovery": true,
+  "physical_verification_scope": "User confirmed shoulder and elbow can rise after v7; user then reported no issue. Not a calibrated accuracy or full workspace acceptance."
+}

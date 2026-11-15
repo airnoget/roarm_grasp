@@ -1,0 +1,13 @@
+{
+  "version": "wifi-debug-20261111-v3",
+  "compile_passed": true,
+  "browser_regression_passed": true,
+  "flash_hash_verified": true,
+  "new_flash_backup_created": false,
+  "port": "COM6",
+  "app_bytes": 1222208,
+  "app_sha256": "7b2fa2d01594c5ac880cb3e616b1ab27985ae8fe342f029dee552b70b2b268fe",
+  "physical_motion_tested": false,
+  "control_completion_gate": "HTTP queue acknowledgement + 250ms cooldown, not target arrival",
+  "max_lead_degrees": 4
+}

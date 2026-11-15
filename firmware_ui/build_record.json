@@ -1,0 +1,47 @@
+{
+  "version": "wifi-debug-20261111-v1",
+  "date": "2026-11-11",
+  "board": "RoArm-M3-S / ESP32-D0WD-V3 rev3.1",
+  "mac": "cc:7b:5c:1f:07:04",
+  "port": "COM6",
+  "core": "esp32:esp32@3.0.7",
+  "fqbn": "esp32:esp32:esp32:PartitionScheme=default,PSRAM=enabled,FlashSize=4M,FlashMode=dio,FlashFreq=80",
+  "source_changes": [
+    "m3_web_page.h",
+    "http_server.h"
+  ],
+  "partition_table_identical_to_backup": true,
+  "app_capacity_bytes": 1310720,
+  "compile_passed": true,
+  "flash_hash_verified_segments": 4,
+  "physical_joint_motion_tested": false,
+  "files": {
+    ".vendor/roarm-m3s-flash-backups/roarm-m3s-before-wifi-ui-20261111.bin": {
+      "bytes": 4194304,
+      "sha256": "31b092fba89f57ae52807b4fdccfcb28b295999ac434f2d59291f3c2baf1ffc5"
+    },
+    ".arduino-wifi/artifacts/RoArm-M3_example.ino.bin": {
+      "bytes": 1220832,
+      "sha256": "5c21f83e8297efbc5c4d1bc2d0e07ec34f95946cabf32e5e80a3e68a779f02b6"
+    },
+    ".arduino-wifi/artifacts/RoArm-M3_example.ino.bootloader.bin": {
+      "bytes": 23376,
+      "sha256": "9eb43cfb1b67ddbe775915256b15fb4d1f1bc4a57f72f9f2f47de23118a06a28"
+    },
+    ".arduino-wifi/artifacts/RoArm-M3_example.ino.partitions.bin": {
+      "bytes": 3072,
+      "sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1"
+    },
+    ".vendor/wifi-debug/RoArm-M3_example/http_server.h": {
+      "bytes": 3912,
+      "sha256": "e415f577e92e90d03163035f8f25c7d5a6836ed307bc86876c66f8236e5a1e06"
+    },
+    ".vendor/wifi-debug/RoArm-M3_example/m3_web_page.h": {
+      "bytes": 9142,
+      "sha256": "e44360c6c5b4fb8ab71ba17ce845af496c664039c55bf1af3e44ab51d9fc4563"
+    }
+  },
+  "read_only_T105_reply_verified": true,
+  "test_power_12v_disconnected": true,
+  "live_webpage_verified": false
+}

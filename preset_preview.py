@@ -57,8 +57,8 @@ def main():
     from preset_inference import factory_geometry,native_frame,infer
     from geometry import sample
     from camera import save_frame
-    detector=None if a.collect else (TargetDetector(str(ROOT/'yolov8s-worldv2.pt'),[a.prompt],'cpu',prompts=[a.prompt])
-                                    if a.world else TargetDetector(str(latest_detector(ROOT)),['artificial_object'],'cpu'))
+    detector=None if a.collect else (TargetDetector(str(ROOT/'yolov8s-worldv2.pt'),[a.prompt],'cpu',prompts=[a.prompt],exclude_gripper=True)
+                                    if a.world else TargetDetector(str(latest_detector(ROOT)),['artificial_object'],'cpu',exclude_gripper=True))
     predictor=None if a.collect or a.geometry else Predictor(ROOT/'.vendor/ggcnn',ROOT/'.vendor/cornell/ggcnn_weights_cornell/ggcnn_epoch_23_cornell','cpu')
     if a.geometry:
         from box_inference import infer_boxes
@@ -66,6 +66,8 @@ def main():
         tracker=GeometryTracker()
         infer=infer_boxes
     collection=None
+    from exploration import TargetRegistry
+    targets=TargetRegistry();selected_id=None
     if a.collect:
         from distance_capture_plan import DistancePlan,banner
         plan=DistancePlan();base=ROOT/'datasets/competition/raw';base.mkdir(parents=True,exist_ok=True)
@@ -113,7 +115,7 @@ def main():
                         else ('YOLO-World: '+a.prompt+' + GG-CNN | LEFT RGB - RIGHT DEPTH | S save Q quit' if a.world
                               else 'YOLO + GG-CNN | LEFT RGB - RIGHT DEPTH | S save Q quit'))
     if a.geometry:name='YOLO + BOX GEOMETRY | LEFT RGB - RIGHT DEPTH | S save Q quit'
-    if a.approach:name='STEP MODE | H home U retract B rear | P/G/D approach C close O open W record | A auto X hold'
+    if a.approach:name='STEP MODE | N unload K return B full unload+return H home U retract | P/G/D C/O W record | A auto X hold'
     try:
         device.load_preset_from_json_file(str(applied))
         search=spec['parameters']['sensor_depth']['disparity_search']
@@ -145,7 +147,7 @@ def main():
         print('PRESET LOADED',a.preset,'SHA256',hashlib.sha256(a.preset.read_bytes()).hexdigest(),flush=True)
         print('Overrides: enable RGB MJPG; native orientation=0; display rotation=',a.rotate,flush=True)
         print('Device settings loaded; Viewer rendering not copied.',flush=True)
-        print(f'P plan; G hover {a.hover_mm:g}mm above TOP; D approach cube centre; C close to recorded angle; O open110; B base180 then release; X hold. TCP link5 XYZ {TCP_OFFSET.tolist()}mm approximate; collision geometry NOT checked.' if a.approach else 'No motion commands.',flush=True)
+        print(f'P plan; G hover {a.hover_mm:g}mm above TOP; D approach cube centre; C close to recorded angle; O configured open; B taught placement + return; X hold. TCP link5 XYZ {TCP_OFFSET.tolist()}mm approximate; collision geometry NOT checked.' if a.approach else 'No motion commands.',flush=True)
         cv2.namedWindow(name,cv2.WINDOW_NORMAL);cv2.resizeWindow(name,1280,450)
         ready=False;pending_save=None
         while True:
@@ -183,6 +185,31 @@ def main():
             if a.geometry and joints is not None:
                 from observation_pose import compare
                 result['observation_pose']=compare(joints)
+                observations=[];located=[]
+                for proposal in result['proposals']:
+                    if proposal.get('candidate_base_xyz_mm') is None:continue
+                    index=proposal.get('native_detection_index')
+                    if index is None:continue
+                    observations.append(dict(name=result['native_detections'][index]['name'],
+                                             position_m=[v/1000 for v in proposal['candidate_base_xyz_mm']]))
+                    located.append(proposal)
+                now=time.monotonic()
+                identities=targets.update(observations,now)
+                for proposal,identity in zip(located,identities):
+                    proposal['target_id']=identity
+                    result['native_detections'][proposal['native_detection_index']]['target_id']=identity
+                if not controller or not (controller.active or controller.auto_phase):
+                    if selected_id not in identities:targets.selected=None
+                    selected_id=targets.choose((0,0,0),now)
+                result['selected_target_id']=selected_id
+                for proposal in located:
+                    identity=proposal.get('target_id')
+                    if identity is not None:
+                        detection=result['native_detections'][proposal['native_detection_index']]
+                        detection['distance_m']=float(np.linalg.norm(np.asarray(proposal['candidate_base_xyz_mm'])[:2]))/1000
+            if a.geometry and a.port:
+                from relative_target import publish_relative_target
+                publish_relative_target(ROOT/'exploration_output/relative-target.json',result)
             view=depth_image(mm/1000)
             rgb_display=cv2.rotate(rgb,cv2.ROTATE_180) if a.rotate==180 else rgb
             depth_display=cv2.rotate(view,cv2.ROTATE_180) if a.rotate==180 else view
@@ -195,7 +222,10 @@ def main():
                 points=to_panel(np.asarray(points),layout).astype(int)
                 lo,hi=np.minimum(*points),np.maximum(*points)
                 cv2.rectangle(left,tuple(lo),tuple(hi),(0,255,255),2)
-                cv2.putText(left,detection['name'],(int(lo[0]),max(20,int(lo[1])-4)),0,.55,(0,255,255),1)
+                identity=detection.get('target_id')
+                label=detection['name']+(f' #{identity}'+(' SELECTED' if identity==selected_id else '') if identity is not None else ' depth?')
+                if detection.get('distance_m') is not None:label+=f' {detection["distance_m"]:.2f}m'
+                cv2.putText(left,label,(int(lo[0]),max(20,int(lo[1])-4)),0,.55,(0,255,255),1)
             # These boxes are projected through the factory RGB/depth geometry,
             # not copied between rasters with different resolutions/viewpoints.
             for detection in result.get('detections',[]):
@@ -225,7 +255,7 @@ def main():
                 label='Candidate BASE' if proposal.get('candidate_base_xyz_mm') is not None else 'CAMERA'
                 if xyz:cv2.putText(right,f'{label} XYZ mm: '+', '.join(f'{v:.1f}' for v in xyz),(8,78),0,.5,(0,255,255),1)
             valid=float((raw>0).mean())
-            cv2.putText(left,'RGB DATA COLLECTION - no detector' if a.collect else f'RGB | targets: {len(detections)}',(8,25),0,.6,(0,255,0),2)
+            cv2.putText(left,'RGB DATA COLLECTION - no detector' if a.collect else f'RGB | targets: {len(detections)} | gripper ignored: {len(getattr(detector,"last_ignored_gripper",[]))}',(8,25),0,.6,(0,255,0),2)
             cv2.putText(right,f'Measured depth valid: {valid*100:.1f}%',(8,25),0,.6,(255,255,255),2)
             kind='Geometry fits' if a.geometry else 'GG-CNN proposals'
             cv2.putText(right,'Depth recorded; labels still required' if a.collect else f'{kind}: {len(result["proposals"])}',(8,50),0,.55,(0,255,0),2)
@@ -250,7 +280,11 @@ def main():
                 footer=np.zeros((230,canvas.shape[1],3),np.uint8)
                 rows=[controller.status,'TCP BASE XYZ mm: '+', '.join(f'{v:.1f}' for v in position),
                       f'Tool-axis tilt from DOWN: {downward_tilt_deg(wrist,[last_state[k] for k in fields[:5]]):.1f} deg | TCP link5 {TCP_OFFSET.tolist()}mm; approximate']
-                if controller.plan and controller.plan.get('phase') in ('retract','home'):
+                if controller.plan and controller.plan.get('phase')=='unload':
+                    label='RETURN' if controller.plan.get('route_return') else 'UNLOAD'
+                    rows.append(f'{label} point {controller.plan["route_step"]}/{len(controller.unload_steps["points"])}: '+controller.plan['route_point'])
+                    rows.append('Target joint deg: '+', '.join(f'{v:.1f}' for v in np.degrees(controller.plan['goal_joints_rad']))+(' | gripper open' if controller.plan.get('route_return') else ' | gripper held until final release'))
+                elif controller.plan and controller.plan.get('phase') in ('retract','home'):
                     rows.append('RETRACT target TCP BASE XYZ mm: '+', '.join(f'{v:.1f}' for v in controller.plan['hover_base_mm']))
                     rows.append('HOME base 0.44 deg | gripper held' if controller.plan['phase']=='home' else 'RETRACT joint deg: '+', '.join(f'{v:.1f}' for v in np.degrees(controller.plan['goal_joints_rad']))+' | gripper held')
                 elif controller.plan:
@@ -281,6 +315,13 @@ def main():
             if a.collect:canvas=np.vstack((banner(plan,canvas.shape[1]),canvas))
             cv2.imshow(name,canvas);key=cv2.waitKey(1)&255;ready=True
             if ord('A')<=key<=ord('Z'):key+=ord('a')-ord('A')
+            if key==9 and (not controller or not (controller.active or controller.auto_phase)):
+                choices=sorted(p['target_id'] for p in result['proposals'] if p.get('target_id') is not None)
+                if choices:
+                    selected_id=choices[(choices.index(selected_id)+1)%len(choices)] if selected_id in choices else choices[0]
+                    targets.selected=selected_id
+                    result['selected_target_id']=selected_id
+                    print('SELECTED TARGET',selected_id,flush=True)
             if key in (27,ord('q')):
                 if controller:controller.hold(last_state)
                 break
@@ -290,7 +331,7 @@ def main():
                         raise ValueError('Retracting with gripper held; X holds before other manual controls')
                     if controller.rear.phase and key not in (255,ord('x'),ord('h'),ord('b'),ord('u')):
                         raise ValueError('Base rear transfer in progress; X cancels before manual controls')
-                    if key in map(ord,'abhupgdxcorjlw[]'):
+                    if key in map(ord,'abhknupgdxcorjlw[]'):
                         controller.notice=chr(key).upper()+' received'
                         print('KEY',chr(key).upper(),flush=True)
                     if key==ord('a'):controller.start_auto(result,joints,last_state)
@@ -303,6 +344,8 @@ def main():
                     elif key==ord(']'):controller.jog_gripper(last_state,True)
                     elif key==ord('['):controller.jog_gripper(last_state,False)
                     elif key==ord('b'):controller.transfer_rear(last_state)
+                    elif key==ord('n'):controller.next_unload_point(last_state)
+                    elif key==ord('k'):controller.next_return_point(last_state)
                     elif key==ord('u'):controller.retract(last_state)
                     elif key==ord('h'):controller.return_home(last_state)
                     elif key==ord('w'):controller.save_waypoint(last_state)

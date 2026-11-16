@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-15",
+  "page_version": "wifi-debug-20261115-v13-gripper295-335",
+  "compile_passed": true,
+  "flashed": false,
+  "app_bytes": 1230144,
+  "app_sha256": "016e3547235271bf80e682d5ea58c0fc4bf165a9565523eb06cd2ea9eb069a55",
+  "boot_gripper_deg": 295,
+  "gripper_close_deg": 335,
+  "physical_boot_pose_verified": false
+}

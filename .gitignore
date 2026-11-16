@@ -42,6 +42,7 @@ depth_diagnostics/
 localization_checks/
 Log/
 waypoints/
+exploration_output/
 calibration/*
 !calibration/active-handeye.json
 !calibration/chess-1794580084411476800/

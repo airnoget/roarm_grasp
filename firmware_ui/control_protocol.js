@@ -7,7 +7,7 @@
     {id:3,key:'e',name:'肘关节',servo:'14',min:0,max:(3071-1024)*360/4096},
     {id:4,key:'t',name:'腕部俯仰',servo:'15',min:-90,max:90},
     {id:5,key:'r',name:'腕部旋转',servo:'16',min:180-4095*360/4096,max:180},
-    {id:6,key:'g',name:'夹爪',servo:'17',min:700*360/4096,max:3396*360/4096}
+    {id:6,key:'g',name:'夹爪',servo:'17',min:0,max:4095*360/4096}
   ];
   const modes={fine:{step:.25,spd:40,interval:250},normal:{step:1.25,spd:100,interval:250},fast:{step:2,spd:160,interval:200}};
   function makeStep(id, radians, deltaDegrees, speed=80){

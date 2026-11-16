@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "coordinate_frame": "native_rgb_before_display_rotation",
+  "reference_size_wh": [1280, 720],
+  "source": "Gemini335L fixed mount, empty open gripper captures 1794749063052172300 and 1794749066900447200",
+  "polygons_px": [
+    [[0, 0], [345, 0], [345, 274], [230, 270], [180, 220], [125, 145], [55, 82], [0, 73]],
+    [[1018, 0], [1279, 0], [1279, 217], [1190, 241], [1040, 270], [1035, 78], [1005, 62]]
+  ],
+  "box_overlap_threshold": 0.7,
+  "centre_overlap_threshold": 0.35,
+  "note": "Fixed camera/gripper occlusion regions only; no global green-color rejection. Recalibrate regions after changing camera mount. Other resolutions bypass this profile."
+}

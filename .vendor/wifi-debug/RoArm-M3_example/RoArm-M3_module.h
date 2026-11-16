@@ -412,7 +412,7 @@ int RoArmM3_rollJointCtrlRad(byte returnType, double radInput, u16 speedInput, u
 //           1: position ctrl. - cmd: input angle in radius.
 int RoArmM3_handJointCtrlRad(byte returnType, double radInput, u16 speedInput, u8 accInput) {
   s16 computePos = calculatePosByRad(radInput);
-  goalPos[6] = constrain(computePos, 700, 3396);
+  goalPos[6] = constrain(computePos, 0, 4095);
 
   if (returnType) {
     st.WritePosEx(GRIPPER_SERVO_ID, goalPos[6], speedInput, accInput);

@@ -10,6 +10,48 @@ from wrist_ik import downward_tilt_deg
 
 
 class LiveApproachTests(unittest.TestCase):
+    def test_new_gripper_295_open_335_close_and_A_gate(self):
+        class Arm:
+            def __init__(self):self.commands=[]
+            def send(self,c):self.commands.append(c)
+        with patch('live_approach.CONTROL_PROFILE',ROOT/'camera_profiles/gripper-control.json'):
+            arm=Arm();controller=LiveApproach(self.w,arm)
+            state=dict(zip(FIELDS,self.q));state.update(v=1235,g=float(np.radians(295)))
+            controller.set_gripper(state,True);controller.set_gripper(state,False)
+            np.testing.assert_allclose([np.degrees(c['rad']) for c in arm.commands],[335,295])
+            with patch.object(controller,'prepare'),patch.object(controller,'execute') as execute:
+                controller.start_auto(dict(native_detections=[{}],proposals=[{}]),self.q,state)
+                execute.assert_called_once()
+            self.assertEqual(controller.auto_closed_deg,335)
+            self.assertEqual(controller.rear.open_deg,295)
+            controller.auto_phase=None;state['g']=float(np.radians(110))
+            with patch.object(controller,'prepare'),patch.object(controller,'execute') as execute:
+                controller.start_auto(dict(native_detections=[{}],proposals=[{}]),self.q,state)
+                execute.assert_not_called()
+            self.assertEqual(controller.auto_phase,'opening')
+            self.assertAlmostEqual(np.degrees(arm.commands[-1]['rad']),295)
+
+    def test_A_opens_then_waits_for_measured_angle_before_arm_movement(self):
+        class Arm:
+            def __init__(self):self.commands=[]
+            def send(self,command):self.commands.append(command)
+        for angle in (30,90,135,170):
+            arm=Arm();controller=LiveApproach(self.w,arm)
+            result=dict(native_detections=[{}],proposals=[{}])
+            state=dict(zip(FIELDS,self.q));state.update(v=1235,g=float(np.radians(angle)))
+            with patch.object(controller,'prepare') as prepare,patch.object(controller,'execute') as execute:
+                controller.start_auto(result,self.q,state)
+                prepare.assert_called_once();execute.assert_not_called()
+                self.assertEqual(controller.auto_phase,'opening')
+                self.assertEqual([c['joint'] for c in arm.commands],[6])
+                self.assertAlmostEqual(np.degrees(arm.commands[0]['rad']),110)
+                for _ in range(4):controller.advance_auto(state)
+                execute.assert_not_called()
+                state['g']=float(np.radians(110))
+                for _ in range(3):controller.advance_auto(state)
+                execute.assert_called_once_with(state)
+            self.assertEqual(controller.auto_phase,'hover')
+
     def test_planning_can_keep_rear_base_pose_beyond_old_90_degree_limit(self):
         q=self.q.copy();q[0]=np.radians(140)
         target=tcp_position(self.w,q)
@@ -128,6 +170,12 @@ class LiveApproachTests(unittest.TestCase):
         self.assertTrue(controller.active)
 
     def setUp(self):
+        import json
+        self.control_temp=tempfile.TemporaryDirectory();self.addCleanup(self.control_temp.cleanup)
+        control=json.loads((ROOT/'camera_profiles/gripper-control.json').read_text())
+        control.update(open_reference_deg=110,closed_angle_deg=138,contact_angle_deg=135.1)
+        profile=Path(self.control_temp.name)/'gripper.json';profile.write_text(json.dumps(control))
+        p=patch('live_approach.CONTROL_PROFILE',profile);p.start();self.addCleanup(p.stop)
         self.w=Wrist(ROOT/'.vendor/roarm_ws',[1]*5,[0]*5)
         self.q=np.radians([.7,9.8,130.8,-2.1,47.8])
 

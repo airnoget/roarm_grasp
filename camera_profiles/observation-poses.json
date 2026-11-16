@@ -56,5 +56,5 @@
   "status": "Observation references only, not verified boot or collision-free transit poses",
   "firmware_boot_changed": true,
   "automatic_motion_enabled": false,
-  "firmware_boot_status": "v11-base360-pitch38 compiled and flashed 2026-11-15, esptool hash verified; physical boot pose not yet verified"
+  "firmware_boot_status": "v12-gripper360 compiled and flashed 2026-11-15, esptool hash verified; same pitch -38deg boot, new gripper angles pending measurement"
 }

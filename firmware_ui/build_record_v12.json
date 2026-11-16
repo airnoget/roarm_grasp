@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-15",
+  "page_version": "wifi-debug-20261115-v12-gripper360",
+  "compile_passed": true,
+  "flash_exit_code": 0,
+  "flash_port": "COM6",
+  "esp_mac": "cc:7b:5c:1f:07:04",
+  "flash_offset": "0x10000",
+  "esptool_hash_verified": true,
+  "app_bytes": 1230128,
+  "app_sha256": "64943015222cbe86465165994d614c484ae78d4d101292115c47cdd6d81af7dd",
+  "gripper_encoder_limits": [0, 4095],
+  "gripper_ui_limits_deg": [0, 359.912109375],
+  "physical_gripper_range_verified": false,
+  "backup_created": false
+}

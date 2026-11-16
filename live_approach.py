@@ -7,6 +7,7 @@ from wrist_ik import raw_limits, solve_grasp_posture, downward_tilt_deg
 from active_handeye import active_report, fingerprint
 from rear_transfer import RearTransfer
 from motion_speeds import SPEEDS,phase_speed
+from unload_route import load_route,LIMITS as ROUTE_LIMITS
 
 ROOT=Path(__file__).resolve().parent
 FIELDS=('b','s','e','t','r')
@@ -62,14 +63,17 @@ class LiveApproach:
         self.status='P plan | G grasp-aligned hover | D descend | X hold | Q exit'
         self.report=None;self.directory=None;self.last_log=0
         self.hover_reached=False;self.descent_queue=[]
-        self.hover_mm=float(hover_mm);self.grasp_clearance=None;self.gripper_status='C close 138deg | O open 110deg | [/] fine jog'
-        self.rear=RearTransfer(arm)
+        self.hover_mm=float(hover_mm);self.grasp_clearance=None
+        control=json.loads(CONTROL_PROFILE.read_text(encoding='utf-8'))
+        self.gripper_status=f'C close {control.get("closed_angle_deg")}deg | O open {control["open_reference_deg"]}deg | [/] fine jog'
+        self.rear=RearTransfer(arm,open_deg=control['open_reference_deg'])
         self.gripper_moving=False
         self.manual_offset_base=np.zeros(3);self.display_left_base=None
         self.auto_phase=None;self.auto_closed_deg=None;self.auto_contact_deg=None;self.auto_close_samples=0
         self.gripper_last_target=None
         self.notice=''
         self.settle_samples=[];self.extra_down_mm=0.
+        self.unload_steps=None;self.unload_index=0;self.unload_continuous=False;self.unload_returning=False
 
     def set_gripper(self,state,closing):
         config=json.loads(CONTROL_PROFILE.read_text(encoding='utf-8'))
@@ -84,6 +88,65 @@ class LiveApproach:
     def transfer_rear(self,state):
         self.retract(state)
         self.auto_phase='retract'
+
+    def start_unload(self,state,continuous=True):
+        self.unload_steps=load_route(ROOT/'camera_profiles/unload-route.json')
+        self.unload_index=0;self.unload_continuous=continuous;self.unload_returning=False
+        self.execute_unload_point(state)
+
+    def start_unload_return(self,state,continuous=True):
+        if self.unload_steps is None:self.unload_steps=load_route(ROOT/'camera_profiles/unload-route.json')
+        if abs(np.degrees(state.get('g',np.nan))-self.unload_steps['release_deg'])>=3 or not np.isfinite(state.get('g',np.nan)):
+            raise ValueError('Return: O open/release first; waiting for measured open angle')
+        q=np.degrees([state[k] for k in FIELDS])
+        distances=[np.max(np.abs(q-np.asarray(point['joints_deg']))) for point in self.unload_steps['points']]
+        nearest=int(np.argmin(distances))
+        if distances[nearest]>5:raise ValueError('Return: current pose is not near a taught route point; will not jump to placement')
+        self.unload_returning=True;self.unload_continuous=continuous;self.unload_index=nearest-1
+        if self.unload_index>=0:self.execute_unload_point(state)
+        else:self.finish_unload_return()
+
+    def next_return_point(self,state):
+        if self.active or self.auto_phase or self.rear.phase:raise ValueError('K: wait for current movement; X cancels')
+        if not self.unload_returning:self.start_unload_return(state,continuous=False)
+        elif self.unload_index>=0:self.execute_unload_point(state)
+        else:self.status='RETURN finished at taught carry_start | P plan new target'
+
+    def finish_unload_return(self):
+        self.auto_phase=None;self.gripper_moving=False;self.plan=None
+        if self.report is not None:
+            self.report['outcome']='taught_route_return_finished_release_unverified';self.flush()
+        self.status='RETURN finished at taught carry_start | gripper open | P plan new target'
+
+    def next_unload_point(self,state):
+        if self.active or self.auto_phase or self.rear.phase:
+            raise ValueError('N: wait for current point; X cancels, B starts full placement')
+        if self.unload_steps is None or self.unload_returning:self.start_unload(state,continuous=False)
+        elif self.unload_index<len(self.unload_steps['points']):self.execute_unload_point(state)
+        else:self.status='All taught points reached | O releases | B restarts route'
+
+    def execute_unload_point(self,state):
+        if state['v']<700:raise ValueError('Servo power unavailable')
+        point=self.unload_steps['points'][self.unload_index]
+        q=np.array([state[k] for k in FIELDS]);goal=np.radians(point['joints_deg'])
+        self.descent_queue=[];self.hover_reached=False;self.settle_samples=[]
+        self.plan=dict(phase='unload',route_return=self.unload_returning,route_point=point['name'],route_step=self.unload_index+1,goal_joints_rad=goal.tolist(),
+                       hover_base_mm=tcp_position(self.wrist,goal).tolist())
+        self.directory=ROOT/'approach_steps'/f'unload-{time.time_ns()}';self.directory.mkdir(parents=True)
+        self.report=dict(plan=self.plan,commands=[],samples=[],outcome='moving',physical_accuracy_verified=False)
+        self.active=True;self.auto_phase='unload_return' if self.unload_returning else 'unload';self.motion_speed=int(point.get('speed_steps_s',80))
+        self.plan['route_speed']=self.motion_speed
+        try:
+            for i in range(5):
+                if abs(goal[i]-q[i])<np.radians(.05):continue
+                command=dict(T=101,joint=i+1,rad=float(goal[i]),spd=self.motion_speed,acc=5)
+                self.arm.send(command);self.report['commands'].append(command)
+            label='RETURN' if self.unload_returning else 'UNLOAD'
+            grip='gripper open' if self.unload_returning else 'gripper held'
+            self.status=f'{label} {self.unload_index+1}/{len(self.unload_steps["points"])} {point["name"]} | {grip} | X hold'
+            self.flush()
+        except Exception:
+            self.hold(state);raise
 
     def retract(self,state):
         """Return shoulder/elbow/wrists near boot; retain base and jaw targets."""
@@ -153,8 +216,8 @@ class LiveApproach:
         if state.get('torswitchG')==0:raise ValueError('ID17 torque off; check servo power')
         if state['v']<700:raise ValueError('Servo power unavailable')
         angle=float(np.degrees(state['g']))
-        if angle<config['open_reference_deg']-2 or angle>3396*360/4096+2:raise ValueError('ID17 angle outside expected range; check feedback before jogging')
-        target=float(np.clip(angle+(3 if closing else -3)*config['closing_angle_direction'],config['open_reference_deg'],3396*360/4096))
+        if angle<config['open_reference_deg']-2 or angle>4095*360/4096+2:raise ValueError('ID17 angle outside expected range; check feedback before jogging')
+        target=float(np.clip(angle+(3 if closing else -3)*config['closing_angle_direction'],config['open_reference_deg'],4095*360/4096))
         command=dict(T=101,joint=6,rad=float(np.radians(target)),spd=40,acc=5)
         self.arm.send(command)
         self.gripper_last_target=target
@@ -168,7 +231,7 @@ class LiveApproach:
         if self.auto_phase or self.active:raise ValueError('Record closure only while arm is stationary')
         angle=float(np.degrees(state.get('g',np.nan)))
         config=json.loads(CONTROL_PROFILE.read_text(encoding='utf-8'))
-        if not np.isfinite(angle) or not config['open_reference_deg']<angle<=3396*360/4096:
+        if not np.isfinite(angle) or not config['open_reference_deg']<angle<=4095*360/4096:
             raise ValueError('Close onto the block with C first, then R records the feedback angle')
         commanded=self.gripper_last_target
         if commanded is None or not angle<=commanded<=angle+5:commanded=angle
@@ -176,7 +239,7 @@ class LiveApproach:
                       automatic_closure_enabled=True,closed_angle_recorded_ns=time.time_ns())
         temporary=CONTROL_PROFILE.with_suffix('.json.tmp')
         temporary.write_text(json.dumps(config,indent=2),encoding='utf-8');temporary.replace(CONTROL_PROFILE)
-        self.gripper_status=f'RECORDED close angle {angle:.1f}deg | O open near110; A auto'
+        self.gripper_status=f'RECORDED close angle {angle:.1f}deg | O open near{config["open_reference_deg"]:g}; A auto'
         print(self.gripper_status,flush=True)
 
     def prepare(self,result,joints):
@@ -185,9 +248,9 @@ class LiveApproach:
         self.plan=None
         self.hover_reached=False;self.descent_queue=[]
         if joints is None or result.get('pose_error'):raise ValueError('Release Wi-Fi controls and wait for a stationary pose')
-        if len(result['native_detections'])!=1 or len(result['proposals'])!=1:
-            raise ValueError('Place ONE visible target with a valid surface fit')
-        surface=result['proposals'][0].get('candidate_base_xyz_mm')
+        from target_selection import selected_proposal
+        proposal=selected_proposal(result)
+        surface=proposal.get('candidate_base_xyz_mm')
         if surface is None:raise ValueError('Base XYZ missing')
         config=json.loads(CONTROL_PROFILE.read_text(encoding='utf-8'))
         reference=np.radians(config['reference_joints_deg'])
@@ -206,13 +269,14 @@ class LiveApproach:
             raise ValueError('TCP calibrated: disable temporary-grasp-bias.json before using calibrated TCP')
         self.manual_offset_base=self.display_left_base*(float(bias['display_left_mm']) if bias['enabled'] else 0.)
         self.extra_down_mm=float(bias.get('descent_extra_down_mm',0)) if bias['enabled'] else 0.
-        geometry=result['proposals'][0]['geometry']
+        geometry=proposal['geometry']
         closing=camera_r@np.asarray(geometry['camera_closing_axis'])
         # Cube centre is half the measured height below its top face.
         # Current isolated-box model assumes support is horizontal in base.
         self.grasp_clearance=grasp_clearance_mm(geometry['height_above_support_mm'],self.extra_down_mm)
         self.plan=hover_plan(self.wrist,joints,np.asarray(surface)+self.manual_offset_base,self.hover_mm,closing_axis_base=closing,closing_axis_local=local)
         self.plan['uncompensated_surface_base_mm']=np.asarray(surface).tolist()
+        self.plan['selected_target_id']=result.get('selected_target_id')
         self.plan['manual_offset_base_mm']=self.manual_offset_base.tolist()
         self.plan['grasp_center_base_mm']=(np.asarray(self.plan['surface_base_mm'])+[0,0,self.grasp_clearance]).tolist()
         self.status='PLANNED: G move to hover | X cancel'
@@ -224,26 +288,36 @@ class LiveApproach:
         closed=config.get('closed_angle_deg')
         if not isinstance(closed,(float,int)) or isinstance(closed,bool) or not np.isfinite(closed):
             raise ValueError('Auto grasp needs measured closed_angle_deg in camera_profiles/gripper-control.json; C/O can measure it first')
-        if not config['open_reference_deg']<closed<=3396*360/4096:raise ValueError('Invalid measured closing angle')
+        if not config['open_reference_deg']<closed<=4095*360/4096:raise ValueError('Invalid measured closing angle')
         if not isinstance(state.get('g'),(float,int)) or not np.isfinite(state['g']):raise ValueError('ID17 feedback unavailable')
-        if abs(np.degrees(state['g'])-config['open_reference_deg'])>5:raise ValueError('Use O to open gripper near 110deg before A')
         if joints is None or result.get('pose_error'):raise ValueError('A: wait for stable joint feedback')
-        if len(result.get('native_detections',[]))!=1 or len(result.get('proposals',[]))!=1:
-            raise ValueError('A: need one visible target AND one depth rectangle; current image is not ready')
+        from target_selection import selected_proposal
+        selected_proposal(result)
         if self.active:self.hold(state)
         self.prepare(result,joints)
         contact=config.get('contact_angle_deg',closed)
         if not isinstance(contact,(int,float)) or not np.isfinite(contact) or not config['open_reference_deg']<contact<=closed:
             raise ValueError('Invalid recorded contact angle')
         self.auto_closed_deg=float(closed);self.auto_contact_deg=float(contact);self.auto_phase='hover'
-        try:self.execute(state)
+        try:
+            if abs(np.degrees(state['g'])-config['open_reference_deg'])>5:
+                self.auto_open_deg=float(config['open_reference_deg']);self.auto_close_samples=0
+                self.set_gripper(state,False);self.auto_phase='opening'
+                self.status=f'AUTO opening: measured {np.degrees(state["g"]):.1f} -> {self.auto_open_deg:g}deg; arm waiting'
+            else:self.execute(state)
         except Exception:self.auto_phase=None;raise
 
     def advance_auto(self,state):
         if not self.auto_phase or self.active:return
         if state['v']<700:
             self.auto_phase=None;self.status='AUTO stopped: servo power unavailable';return
-        if self.auto_phase=='home_retract':
+        if self.auto_phase=='opening':
+            angle=float(np.degrees(state.get('g',np.nan)))
+            self.auto_close_samples=self.auto_close_samples+1 if np.isfinite(angle) and abs(angle-self.auto_open_deg)<=5 else 0
+            self.status=f'AUTO opening: measured {angle:.1f} / target {self.auto_open_deg:g}deg | arm waiting | X cancels'
+            if self.auto_close_samples>=3:
+                self.gripper_moving=False;self.auto_phase='hover';self.execute(state)
+        elif self.auto_phase=='home_retract':
             self._retract(state,return_base=True);self.auto_phase='home'
         elif self.auto_phase=='home':
             self.auto_phase=None;self.status='HOME reached near startup | gripper held | P plan again'
@@ -269,8 +343,36 @@ class LiveApproach:
         elif self.auto_phase=='lift':
             self._retract(state);self.auto_phase='retract'
         elif self.auto_phase=='retract':
-            self.rear.start(state);self.auto_phase='rear_transfer'
-            self.status=self.rear.status
+            if (ROOT/'camera_profiles/unload-route.json').is_file():self.start_unload(state)
+            else:
+                self.rear.start(state);self.auto_phase='rear_transfer'
+                self.status=self.rear.status
+        elif self.auto_phase=='unload':
+            self.unload_index+=1
+            if not self.unload_continuous:
+                self.auto_phase=None
+                self.status=f'UNLOAD point {self.unload_index} reached | N next | O release manually'
+            elif self.unload_index<len(self.unload_steps['points']):self.execute_unload_point(state)
+            else:
+                target=float(self.unload_steps['release_deg'])
+                command=dict(T=101,joint=6,rad=float(np.radians(target)),spd=SPEEDS['gripper_release'],acc=5)
+                self.arm.send(command);self.gripper_moving=True;self.gripper_last_target=target
+                self.report.setdefault('gripper_commands',[]).append(command);self.flush()
+                self.auto_phase='unload_release';self.auto_close_samples=0
+                self.status='UNLOAD final point reached; releasing'
+        elif self.auto_phase=='unload_release':
+            self.auto_close_samples=self.auto_close_samples+1 if abs(np.degrees(state.get('g',np.nan))-self.unload_steps['release_deg'])<2 else 0
+            if self.auto_close_samples>=3:
+                self.gripper_moving=False
+                self.report['outcome']='taught_route_release_finished_grasp_unverified';self.flush()
+                self.start_unload_return(state,continuous=True)
+        elif self.auto_phase=='unload_return':
+            self.unload_index-=1
+            if self.unload_index<0:self.finish_unload_return()
+            elif self.unload_continuous:self.execute_unload_point(state)
+            else:
+                self.auto_phase=None
+                self.status=f'RETURN point reached | K next (point {self.unload_index+1}) | gripper open'
         elif self.auto_phase=='rear_transfer' and not self.rear.phase:
             self.auto_phase=None
             self.report['rear_transfer_events']=self.rear.events
@@ -362,6 +464,7 @@ class LiveApproach:
             centre=np.asarray(self.plan['surface_base_mm'])+[0,0,self.grasp_clearance]
             # Both ends of this segment must be outside the precision zone.
             grasp_distance=min(np.linalg.norm(position-centre),np.linalg.norm(np.asarray(self.plan['hover_base_mm'])-centre))
+        if self.plan['phase']=='unload':return SPEEDS['precision'] if distance<=30 else self.plan.get('route_speed',80)
         return phase_speed(self.plan['phase'],distance,grasp_distance)
 
     def observe(self,state):
@@ -401,7 +504,9 @@ class LiveApproach:
                                                      error_xyz_mm=delta.tolist(),physical_accuracy_verified=False)
                 print('PHASE',self.plan['phase'],completion,'residual XYZ mm',np.round(delta,1).tolist(),flush=True)
                 self.hover_reached=self.plan['phase']=='hover'
-                if self.plan['phase']=='retract':
+                if self.plan['phase']=='unload':
+                    self.status='UNLOAD point reached'
+                elif self.plan['phase']=='retract':
                     self.status='RETRACT finished | B rear turn + release | gripper held'
                 else:
                     self.status='HOVER reached | D cube-centre approach | C close O open' if self.hover_reached else 'NEAR cube centre by model | C close O open | X hold'
@@ -428,7 +533,7 @@ class LiveApproach:
             self.report['tracking_blocked']=True
             self.status='NOT REACHED after correction | B/U/H take over | X hold'
             self.flush();return
-        bounds=raw_limits(self.wrist,ROOT/'.vendor/roarm_ws')
+        bounds=np.radians(ROUTE_LIMITS).copy() if self.plan['phase']=='unload' else raw_limits(self.wrist,ROOT/'.vendor/roarm_ws')
         firmware=np.radians([[-180,179.9],[-90,90],[0,179.9],[-90,90],[-179.9,180]])
         bounds[:,0]=np.maximum(bounds[:,0],firmware[:,0]);bounds[:,1]=np.minimum(bounds[:,1],firmware[:,1])
         previous=np.asarray(corrections[-1]['command_joints_rad'] if corrections else goal,float)
@@ -452,6 +557,7 @@ class LiveApproach:
 
     def hold(self,state):
         self.auto_phase=None
+        self.unload_steps=None;self.unload_index=0;self.unload_continuous=False;self.unload_returning=False
         self.rear.stop(state)
         if self.gripper_moving and isinstance(state.get('g'),(int,float)):
             self.arm.send(dict(T=101,joint=6,rad=float(state['g']),spd=40,acc=5))

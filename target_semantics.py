@@ -5,7 +5,7 @@ COMPETITION_TARGET = "artificial_object"
 
 
 class TargetDetector:
-    def __init__(self, checkpoint, allowed, device="cpu", *, prompts=None):
+    def __init__(self, checkpoint, allowed, device="cpu", *, prompts=None, exclude_gripper=False):
         from ultralytics import YOLO, YOLOWorld
 
         self.model = YOLOWorld(checkpoint) if prompts else YOLO(checkpoint, task="detect")
@@ -13,6 +13,8 @@ class TargetDetector:
             self.model.set_classes(list(prompts))
         self.allowed = set(allowed)
         self.device = device
+        from gripper_exclusion import GripperExclusion
+        self.gripper_exclusion=GripperExclusion() if exclude_gripper else None
         names = self.model.names
         if not self.allowed or not self.allowed <= set(names.values() if isinstance(names, dict) else names):
             raise ValueError("Requested target classes are absent from detector weights")
@@ -26,12 +28,15 @@ class TargetDetector:
         self.image_source = 'native_rgb' if native else 'depth_aligned_rgb'
         self.last_depth_to_rgb = None
         self.last_native_detections = []
+        self.last_ignored_gripper=[];self.last_native_exclusion_mask=None
         image = frame.raw_bgr if native else frame.bgr
         result = self.model.predict(image, device=self.device, conf=.35, verbose=False)[0]
         boxes = result.boxes
         detections = [(result.names[int(cls)], box) for cls, box in
                       zip(boxes.cls.cpu().numpy(), boxes.xyxy.cpu().numpy())]
         if native:
+            if getattr(self,'gripper_exclusion',None) is not None:
+                detections,self.last_ignored_gripper,self.last_native_exclusion_mask=self.gripper_exclusion.filter(detections,image.shape)
             self.last_native_detections = detections
             self.last_depth_to_rgb = depth_to_rgb(frame)
             return boxes_to_depth(detections, self.last_depth_to_rgb)

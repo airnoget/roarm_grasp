@@ -10,7 +10,7 @@
 <p class="note">按住 ＋/− 持续转动，松手不再发新目标。肩、肘目标最多领先实测8°，其余4°；松手后末段仍可能继续完成。标注速度是上限，实际受网络和负载影响。</p></section>
 <section class="card"><div class="bar"><strong>原装照明</strong><button id="lightOn">开灯</button><button id="lightOff">关灯</button><span id="lightStatus">状态未确认</span></div></section>
 <section class="card"><div id="joints"></div></section>
-<section class="card"><div class="name">状态与最近指令</div><p class="note">调姿不等待精确到位；保存标定样本前必须松手，等待实际关节角稳定。这里显示实测角度，绝不能用目标角替代采样角。肩关节驱动12和13两个舵机。</p><pre id="last">尚未发送运动指令</pre><details><summary>舵机诊断（无动作或方向异常时展开）</summary><p class="note">只读反馈：力矩0为关闭，模式0为位置模式；未知值需核对，不会自动开启力矩。目标记录来自控制板已处理的队列指令。</p><pre id="diagnostics">等待诊断反馈</pre></details><div class="note">页面版本 wifi-debug-20261115-v11-base360-pitch38</div></section>
+<section class="card"><div class="name">状态与最近指令</div><p class="note">调姿不等待精确到位；保存标定样本前必须松手，等待实际关节角稳定。这里显示实测角度，绝不能用目标角替代采样角。肩关节驱动12和13两个舵机。</p><pre id="last">尚未发送运动指令</pre><details><summary>舵机诊断（无动作或方向异常时展开）</summary><p class="note">只读反馈：力矩0为关闭，模式0为位置模式；未知值需核对，不会自动开启力矩。目标记录来自控制板已处理的队列指令。</p><pre id="diagnostics">等待诊断反馈</pre></details><div class="note">页面版本 wifi-debug-20261115-v13-gripper295-335</div></section>
 </main><script>
 /* Bounded single-joint commands for bench commissioning. No broadcast commands. */
 (function(root){
@@ -21,7 +21,7 @@
     {id:3,key:'e',name:'肘关节',servo:'14',min:0,max:(3071-1024)*360/4096},
     {id:4,key:'t',name:'腕部俯仰',servo:'15',min:-90,max:90},
     {id:5,key:'r',name:'腕部旋转',servo:'16',min:180-4095*360/4096,max:180},
-    {id:6,key:'g',name:'夹爪',servo:'17',min:700*360/4096,max:3396*360/4096}
+    {id:6,key:'g',name:'夹爪',servo:'17',min:0,max:4095*360/4096}
   ];
   const modes={fine:{step:.25,spd:40,interval:250},normal:{step:1.25,spd:100,interval:250},fast:{step:2,spd:160,interval:200}};
   function makeStep(id, radians, deltaDegrees, speed=80){

@@ -1,0 +1,132 @@
+{
+  "enabled": true,
+  "recorded_after_base_raise_approx_mm": 100,
+  "points": [
+    {
+      "name": "carry_start",
+      "joints_deg": [
+        34.804687499844505,
+        0.17578127430651508,
+        149.50195311391468,
+        -36.6503906508798,
+        2.8124999878337844
+      ],
+      "recorded_joints_deg": [
+        34.804687499844505,
+        0.17578127430651508,
+        149.50195311391468,
+        -36.6503906508798,
+        2.8124999878337844
+      ],
+      "source": "waypoints/pose-1794738657867410300.json",
+      "source_sha256": "5010b80045e0ea14c1992036403b1f895206cf61e28c062d24b6c903a9735276",
+      "speed_steps_s": 80
+    },
+    {
+      "name": "turn_left_83",
+      "joints_deg": [
+        83.4960937218472,
+        0.17578127430651508,
+        149.50195311391468,
+        -36.6503906508798,
+        2.8124999878337844
+      ],
+      "recorded_joints_deg": [
+        83.4960937218472,
+        0.17578127430651508,
+        149.50195311391468,
+        -36.6503906508798,
+        2.8124999878337844
+      ],
+      "source": "waypoints/pose-1794738688790227900.json",
+      "source_sha256": "6d3b936812be5b2cff320a150261ea5a7c00fa6b8d38985b13a555e3a2b18254",
+      "speed_steps_s": 80
+    },
+    {
+      "name": "raise_shoulder",
+      "joints_deg": [
+        83.4960937218472,
+        -35.332031265468274,
+        149.58984375106792,
+        -36.56250001372654,
+        2.8124999878337844
+      ],
+      "recorded_joints_deg": [
+        83.4960937218472,
+        -35.332031265468274,
+        149.58984375106792,
+        -36.56250001372654,
+        2.8124999878337844
+      ],
+      "source": "waypoints/pose-1794738704925011000.json",
+      "source_sha256": "365b81ef8273fa4fb699291c747d488eef4c8a87e1fdf0ed888642a9525e806e",
+      "speed_steps_s": 80
+    },
+    {
+      "name": "fold_elbow",
+      "joints_deg": [
+        83.4960937218472,
+        -35.947265610949515,
+        179.912109375,
+        -15.117187527712233,
+        2.8124999878337844
+      ],
+      "recorded_joints_deg": [
+        83.4960937218472,
+        -35.947265610949515,
+        180.43945315197365,
+        -15.117187527712233,
+        2.8124999878337844
+      ],
+      "source": "waypoints/pose-1794738730296226600.json",
+      "source_sha256": "a0fa093c53746551b661408e1dd04cafe12ac7ea97d6d9370aadc82c8bc80a01",
+      "speed_steps_s": 80
+    },
+    {
+      "name": "turn_rear_175",
+      "joints_deg": [
+        175.07812497317428,
+        -36.21093752240929,
+        179.912109375,
+        -15.117187527712233,
+        2.8124999878337844
+      ],
+      "recorded_joints_deg": [
+        175.07812497317428,
+        -36.21093752240929,
+        180.3515625148204,
+        -15.117187527712233,
+        2.8124999878337844
+      ],
+      "source": "waypoints/pose-1794738823071202500.json",
+      "source_sha256": "733c5dacd65e0683492da982d51e040996b93f264cf4c1b4e410554b809d6091",
+      "speed_steps_s": 80
+    },
+    {
+      "name": "placement",
+      "joints_deg": [
+        175.6933593759513,
+        -4.83398435587981,
+        179.912109375,
+        -38.847656235936554,
+        2.724609350680527
+      ],
+      "recorded_joints_deg": [
+        175.6933593759513,
+        -4.83398435587981,
+        180.5273437318311,
+        -38.847656235936554,
+        2.724609350680527
+      ],
+      "source": "waypoints/pose-1794738870070596600.json",
+      "source_sha256": "99a531516dd0dc4e7693963ae456d52540f06c4d95a51188ef164ccc101eaa79",
+      "speed_steps_s": 40
+    }
+  ],
+  "release_deg": 295.0,
+  "source_record_count": 8,
+  "omitted_duplicate": "pose-1794738833221990800.json",
+  "release_source": "User new-gripper open angle about295deg, 2026-11-15; supersedes old110deg waypoint",
+  "physically_replayed": false,
+  "notes": "Explicit chronological taught route. Jaw feedback is not replayed as a command. Elbow feedback overshoot <1deg normalized to firmware encoder endpoint."
+}

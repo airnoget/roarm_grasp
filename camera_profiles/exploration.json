@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "transport": "preview",
+  "coordinate_frame": "odom",
+  "armbase_to_chassis": null,
+  "scan_envelope": {"poses": {}, "edges": []},
+  "docking_workspace": null,
+  "coverage": {"scope": "visible_floor_only", "camera_fov_rad": null, "usable_range_m": null},
+  "notes": "Teach scan edges, measure chassis extrinsics and docking workspace before hardware integration. Wall targets need separate height/view coverage."
+}

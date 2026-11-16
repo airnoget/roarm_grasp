@@ -8,11 +8,14 @@ def infer_boxes(frame,detector,wrist=None,joints=None,hand_eye=None):
     if getattr(detector,'image_source',None)!='native_rgb':
         raise ValueError('Box geometry requires native RGB factory calibration')
     uv=detector.last_depth_to_rgb;valid=np.isfinite(uv).all(axis=2)
+    from gripper_exclusion import project_exclusion
+    body=project_exclusion(getattr(detector,'last_native_exclusion_mask',None),uv)
     native=detector.last_native_detections;masks=[]
     for name,box in native:
         x0,y0,x1,y1=box
-        masks.append(valid&(uv[...,0]>=x0)&(uv[...,0]<x1)&(uv[...,1]>=y0)&(uv[...,1]<y1))
+        masks.append(valid&~body&(uv[...,0]>=x0)&(uv[...,0]<x1)&(uv[...,1]>=y0)&(uv[...,1]<y1))
     occupied=np.logical_or.reduce(masks) if masks else np.zeros(valid.shape,bool)
+    occupied|=body
     proposals=[];rejected=[];diagnostics=[]
     h,w=valid.shape
     for index,((name,_),mask) in enumerate(zip(native,masks)):
@@ -50,7 +53,8 @@ def infer_boxes(frame,detector,wrist=None,joints=None,hand_eye=None):
             if norm<1e-6:raise ValueError('Closing direction projects to zero')
             p=dict(pixel=[u,v],angle_rad=float(np.arctan2(image_axis[1],image_axis[0])),
                    width_px=geometry['observed_opening_mm']*norm,score=1.0,
-                   camera_xyz_mm=xyz.tolist(),geometry=geometry,backend='box_geometry',score_is_probability=False)
+                   camera_xyz_mm=xyz.tolist(),geometry=geometry,backend='box_geometry',score_is_probability=False,
+                   native_detection_index=index)
             if wrist is not None and joints is not None:
                 r,t=wrist.camera_pose(joints,hand_eye);p['candidate_base_xyz_mm']=(r@xyz+t).tolist()
             proposals.append(p)
@@ -60,5 +64,6 @@ def infer_boxes(frame,detector,wrist=None,joints=None,hand_eye=None):
             rejected.append(f'Target {index+1}: {exc}')
     return dict(native_detections=[dict(name=n,xyxy=list(map(float,b))) for n,b in native],
                 detections=[dict(name=n,xyxy=list(map(int,b))) for n,b in detections],
-                proposals=proposals,rejected=rejected,depth_diagnostics=diagnostics,backend='box_geometry',motion_enabled=False,
+                proposals=proposals,rejected=rejected,depth_diagnostics=diagnostics,
+                ignored_gripper_detections=getattr(detector,'last_ignored_gripper',[]),backend='box_geometry',motion_enabled=False,
                 scope='Geometric surface fit under isolated-box/planar-support assumptions; not a robot grasp acceptance')

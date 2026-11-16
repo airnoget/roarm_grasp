@@ -1,8 +1,8 @@
 {
   "servo_id": 17,
-  "open_reference_deg": 110.0,
+  "open_reference_deg": 295.0,
   "closing_angle_direction": 1,
-  "closed_angle_deg": 138.0,
+  "closed_angle_deg": 335.0,
   "roll_reference_deg": 3.0,
   "reference_joints_deg": [
     0.44,
@@ -14,7 +14,7 @@
   "closing_axis_reference_frame": "horizontal_at_boot",
   "reference_status": "User: two jaws left/right horizontal, not top/bottom, at roll 3deg; assume world-horizontal and perpendicular to tool axis",
   "automatic_closure_enabled": true,
-  "contact_angle_deg": 135.1,
-  "closed_angle_source": "User-provided held-block screenshot 2026-11-13: command 138deg, measured 135.1deg",
+  "contact_angle_deg": 335.0,
+  "closed_angle_source": "User approximate new-gripper measurement 2026-11-15: maximum open about295deg, gripping about335deg; contact command distinction pending refinement",
   "closed_angle_recorded_ns": 1794584515582591300
 }
